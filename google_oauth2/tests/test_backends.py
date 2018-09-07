@@ -33,8 +33,7 @@ class AuthenticateUser(TestCase):
         self.user = User.objects.create_user(
             email='test@example.com',
             username='test',
-            password='test',
-            type='student'
+            password='test'
         )
         self.user_details = user_details()
         self.backend_name = 'google-oauth2'

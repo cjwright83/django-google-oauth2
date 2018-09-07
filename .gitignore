@@ -4,5 +4,14 @@
 # Setuptools distribution folder.
 /dist/
 
+# Setuptools build folder.
+build/
+
 # Python egg metadata, regenerated from source files by setuptools.
 /*.egg-info
+
+# Egg dependencies required by setup.py test
+/.eggs/
+
+# PyTest cache
+.pytest_cache/
