@@ -34,7 +34,7 @@ class PyTest(TestCommand):
 
 
 tests_require = [
-    'Django>=1.11.16,<2',
+    'Django>=1.11.20,<2',
     'mock>=2.0',
     'pytest>3,<4',
     'pytest-django>3,<4'
