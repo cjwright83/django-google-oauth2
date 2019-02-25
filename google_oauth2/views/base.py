@@ -14,17 +14,14 @@ def get_flow(scopes, **kwargs):
 
 
 class BaseBeginAuthView(View):
-    noauth_required = False
     abort_url = None
     prompt = 'consent'
-    scopes = ()
     redirect_path = None
+    service_class = None
+    scopes = None
 
     def get(self, request, *args, **kwargs):
-        if self.noauth_required:
-            if hasattr(self.request, 'user') and self.request.user.is_anonymous():
-                return self.start_auth()
-        return HttpResponseRedirect(self.get_abort_url())
+        return self.start_auth()
 
     def start_auth(self):
         redirect_uri = self.request.build_absolute_uri(self.get_redirect_path())
@@ -35,23 +32,26 @@ class BaseBeginAuthView(View):
     def get_abort_url(self):
         return self.abort_url
 
+    def get_prompt(self):
+        return self.prompt
+
     def get_redirect_path(self):
         return str(self.redirect_path)
+
+    def get_service_class(self):
+        return self.service_class
 
     def get_scopes(self):
         return self.scopes
 
-    def get_prompt(self):
-        return self.prompt
-
 
 class BaseCompleteAuthView(View):
-    service_url = None
-    success_url = None
-    failure_url = None
     access_denied_url = None
+    failure_url = None
     redirect_path = None
-    scopes = ()
+    scopes = None
+    service_class = None
+    success_url = None
 
     def get(self, request, *args, **kwargs):
         if 'error' not in request.GET and 'code' not in request.GET:
@@ -61,35 +61,50 @@ class BaseCompleteAuthView(View):
         return self.access_granted(request.GET.get('code'))
 
     def access_denied(self, error):
-        return HttpResponseRedirect(self.get_access_denied_url(error))
+        return HttpResponseRedirect(self.get_access_denied_url())
 
     def access_granted(self, code):
+        return self.make_service_calls(self.get_auth_session(code))
+
+    def get_auth_session(self, code):
         redirect_uri = self.request.build_absolute_uri(self.get_redirect_path())
         flow = get_flow(self.get_scopes(), redirect_uri=redirect_uri)
         flow.fetch_token(code=code)
-        auth_session = flow.authorized_session()
-        response = auth_session.get(self.get_service_url()).json()
-        if self.process_service_response(response):
-            return HttpResponseRedirect(self.get_success_url())
-        return HttpResponseRedirect(self.get_failure_url())
+        return flow.authorized_session()
 
-    def process_service_response(self, response):
+    def make_service_calls(self, auth_session):
+        service = self.get_service(auth_session)
+        service.process_api_calls()
+        if service.errors:
+            return self.fail(service.errors)
+        return self.success()
+
+    def get_service(self, auth_session):
+        return self.get_service_class()(auth_session, self.get_service_context())
+
+    def get_service_context(self):
         return None
 
-    def get_scopes(self):
-        return self.scopes
+    def success(self):
+        return HttpResponseRedirect(self.get_success_url())
 
-    def get_service_url(self):
-        return self.service_url
+    def fail(self, errors):
+        return HttpResponseRedirect(self.get_failure_url())
 
-    def get_success_url(self):
-        return self.success_url
+    def get_access_denied_url(self):
+        return self.access_denied_url
 
     def get_failure_url(self):
         return self.failure_url
 
-    def get_access_denied_url(self, error):
-        return self.access_denied_url
-
     def get_redirect_path(self):
         return str(self.redirect_path)
+
+    def get_scopes(self):
+        return self.scopes
+
+    def get_service_class(self):
+        return self.service_class
+
+    def get_success_url(self):
+        return self.success_url
