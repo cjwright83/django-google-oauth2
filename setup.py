@@ -43,7 +43,7 @@ tests_require = [
 
 setup(
     name='django-google-oauth2',
-    version='0.1',
+    version='0.1b',
     description='Views and helpers for interacting with Google APIs via OAuth2 in a Django app.',
     url='http://github.com/cjwright83y/django-google-oauth2/',
     author='Chris Wright',

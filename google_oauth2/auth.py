@@ -11,12 +11,12 @@ def get_or_create_user(user_details):
         if hasattr(settings, 'GOOGLE_OAUTH2_USER_GET_FUNCTION'):
             user = _get_func(settings.GOOGLE_OAUTH2_USER_GET_FUNCTION)(user_details)
         else:
-            user = User.objects.get(email=user_details['user']['email'])
+            user = User.objects.get(email=user_details.email)
     except User.DoesNotExist:
         if hasattr(settings, 'GOOGLE_OAUTH2_USER_CREATE_FUNCTION'):
             user = _get_func(settings.GOOGLE_OAUTH2_USER_CREATE_FUNCTION)(user_details)
         else:
-            user = User.objects.create_user(**user_details['user'])
+            user = User.objects.create_user(**user_details.user)
         # Handle integrity error
     return user
 
